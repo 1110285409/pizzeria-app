@@ -6,6 +6,7 @@ use App\Models\Pizza;
 use App\Models\PizzaSize;
 use App\Models\Ingredient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PizzaController extends Controller
 {
