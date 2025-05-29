@@ -1,74 +1,68 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\Pizza;
+use App\Models\PizzaSize;
+use Illuminate\Http\Request;
 
 class PizzaController extends Controller
 {
     public function index()
     {
-        return response()->json([
-            ['id' => 1, 'nombre' => 'Margarita', 'precio' => 8.99],
-            ['id' => 2, 'nombre' => 'Pepperoni', 'precio' => 10.50],
-            ['id' => 3, 'nombre' => 'Hawaiana', 'precio' => 9.75],
-        ]);
-    } 
+        return Pizza::with('sizes')->get();
+    }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|unique:pizzas,name',
+            'sizes' => 'required|array',
+            'sizes.*.size' => 'required|in:pequeña,mediana,grande',
+            'sizes.*.price' => 'required|numeric|min:0',
         ]);
 
-        $pizza = Pizza::create($request->all());
-        return response()->json($pizza, 201);
+        $pizza = Pizza::create(['name' => $request->name]);
+
+        foreach ($request->sizes as $size) {
+            $pizza->sizes()->create($size);
+        }
+
+        return $pizza->load('sizes');
     }
 
     public function show($id)
-{
-    $pizza = Pizza::find($id);
-
-    if (!$pizza) {
-        return response()->json(['error' => 'Pizza no encontrada'], 404);
+    {
+        return Pizza::with('sizes')->findOrFail($id);
     }
 
-    return response()->json($pizza);
-}
+    public function update(Request $request, $id)
+    {
+        $pizza = Pizza::findOrFail($id);
 
-public function update(Request $request, $id)
-{
-    $pizza = Pizza::find($id);
+        $request->validate([
+            'name' => 'required|string|unique:pizzas,name,' . $pizza->id,
+            'sizes' => 'required|array',
+            'sizes.*.size' => 'required|in:pequeña,mediana,grande',
+            'sizes.*.price' => 'required|numeric|min:0',
+        ]);
 
-    if (!$pizza) {
-        return response()->json(['error' => 'Pizza no encontrada'], 404);
+        $pizza->update(['name' => $request->name]);
+        $pizza->sizes()->delete();
+
+        foreach ($request->sizes as $size) {
+            $pizza->sizes()->create($size);
+        }
+
+        return $pizza->load('sizes');
     }
 
-    $request->validate([
-        'name' => 'required|string|max:255',
-    ]);
-
-    $pizza->update($request->all());
-
-    return response()->json($pizza);
-}
-
-public function destroy($id)
-{
-    $pizza = Pizza::find($id);
-
-    if (!$pizza) {
-        return response()->json(['error' => 'Pizza no encontrada'], 404);
+    public function destroy($id)
+    {
+        $pizza = Pizza::findOrFail($id);
+        $pizza->sizes()->delete();
+        $pizza->delete();
+        return response()->json(null, 204);
     }
-
-    $pizza->delete();
-
-    return response()->json(['message' => 'Pizza eliminada']);
-}
-
-
-    
 }
