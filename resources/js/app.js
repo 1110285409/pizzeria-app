@@ -1,27 +1,22 @@
 import '../css/app.css';
 import './bootstrap';
 
-import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createApp, h } from 'vue';
-import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+import VueSweetalert2 from 'vue-sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
-createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
-    resolve: (name) =>
-        resolvePageComponent(
-            `./Pages/${name}.vue`,
-            import.meta.glob('./Pages/**/*.vue'),
-        ),
-    setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue)
-            .mount(el);
-    },
-    progress: {
-        color: '#4B5563',
-    },
-});
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faEdit, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+library.add(faEdit, faTrash, faPlus);
+
+const app = createApp(App);
+app.component('font-awesome-icon', FontAwesomeIcon);
+app.use(VueSweetalert2);
+app.use(router);
+app.mount('#app');
+
